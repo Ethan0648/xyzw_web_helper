@@ -5,6 +5,8 @@
       'full-grid': activeSection === 'fightPvp',
       'full-page-mode':
         activeSection === 'saltFieldGroup' ||
+        activeSection === 'campChallengeGroup' ||
+        activeSection === 'apexChallengeGroup' ||
         activeSection === 'peachGroup' ||
         activeSection === 'rankGroup',
       'club-mode': activeSection === 'club',
@@ -25,6 +27,8 @@
       <n-tab-pane name="club" tab="俱乐部" />
       <n-tab-pane name="activity" tab="活动" />
       <n-tab-pane v-if="ENABLE_TOOLS_TAB" name="tools" tab="工具" />
+      <n-tab-pane name="apexChallengeGroup" tab="逐鹿盐山" />
+      <n-tab-pane name="campChallengeGroup" tab="营地挑战" />
       <n-tab-pane name="saltFieldGroup" tab="盐场" />
       <n-tab-pane name="peachGroup" tab="蟠桃园" />
       <n-tab-pane name="rankGroup" tab="排行榜" />
@@ -115,8 +119,6 @@
       </div>
     </div>
 
-    <!-- 俱乐部赛车（合并自俱乐部赛车 + 疯狂赛车） -->
-
     <!-- 俱乐部签到（已迁移到俱乐部信息-概览，故隐藏原卡片） -->
     <div
       class="status-card legion-signin"
@@ -155,9 +157,8 @@
       </div>
     </div>
 
-    <!-- 俱乐部信息与疯狂赛车（同级卡片，仅俱乐部分区） -->
+    <!-- 俱乐部信息（仅俱乐部分区） -->
     <ClubInfo v-if="activeSection === 'club'" />
-    <ClubCarKing v-if="activeSection === 'club'" />
 
     <!-- 月度任务进度（提取组件） -->
     <MonthlyTasksCard v-show="activeSection === 'activity'" />
@@ -167,6 +168,16 @@
 
     <!-- 换皮闯关 -->
     <SkinChallengeCard v-show="activeSection === 'activity'" />
+
+    <!-- 逐鹿盐山分组 -->
+    <div class="apex-challenge-group" v-if="activeSection === 'apexChallengeGroup'">
+      <ApexChallenge />
+    </div>
+
+    <!-- 营地挑战分组 -->
+    <div class="camp-challenge-group" v-if="activeSection === 'campChallengeGroup'">
+      <CampChallenge />
+    </div>
 
     <!-- 盐场分组（包含盐场、周战绩、月战绩） -->
     <div class="salt-field-group" v-if="activeSection === 'saltFieldGroup'">
@@ -389,6 +400,8 @@ import ServerRankList from "./cards/ServerRankListPageCard.vue";
 import LegionWarMap from "./Club/LegionWarMap.vue";
 import LegionWarStatistics from "./Club/LegionWarStatistics.vue";
 import Unlimitedlineup from "./cards/Unlimitedlineup.vue";
+import CampChallenge from "./Club/CampChallenge.vue";
+import ApexChallenge from "./Apex/ApexChallenge.vue";
 
 const tokenStore = useTokenStore();
 const message = useMessage();

@@ -26,7 +26,7 @@
       <a-modal
         class="token-import-modal"
         v-model:visible="showImportForm"
-        width="40rem"
+        width="52rem"
         :footer="false"
         :default-visible="!tokenStore.hasTokens"
       >
@@ -48,6 +48,7 @@
             <n-radio-button value="manual"> 手动输入 </n-radio-button>
             <n-radio-button value="url"> URL获取 </n-radio-button>
             <n-radio-button value="wxQrcode"> 微信扫码获取 </n-radio-button>
+            <n-radio-button value="mobile"> 手机号验证码 </n-radio-button>
             <n-radio-button value="bin"> BIN多角色获取 </n-radio-button>
             <n-radio-button value="singlebin"> BIN单角色获取 </n-radio-button>
           </n-radio-group>
@@ -68,6 +69,11 @@
             @ok="() => (showImportForm = false)"
             v-if="importMethod === 'wxQrcode'"
           />
+          <mobile-token-form
+            @cancel="() => (showImportForm = false)"
+            @ok="() => (showImportForm = false)"
+            v-if="importMethod === 'mobile'"
+          />
           <bin-token-form
             @cancel="() => (showImportForm = false)"
             @ok="() => (showImportForm = false)"
@@ -84,14 +90,15 @@
       <!-- Token列表 -->
       <div v-if="tokenStore.hasTokens" class="tokens-section">
         <div class="section-header">
-          <n-space align="center">
+          <div class="section-main">
+            <div class="section-title-row">
             <h2>我的Token列表 ({{ tokenStore.gameTokens.length }}个)</h2>
             <n-radio-group v-model:value="viewMode" size="small">
               <n-radio-button value="list">列表</n-radio-button>
               <n-radio-button value="card">卡片</n-radio-button>
             </n-radio-group>
-            <n-divider vertical style="height: 24px"></n-divider>
-            <n-button-group size="small">
+            </div>
+            <n-button-group size="small" class="sort-buttons">
               <n-button
                 @click="toggleSort('name')"
                 :type="sortConfig.field === 'name' ? 'primary' : 'default'"
@@ -117,8 +124,41 @@
                 最后使用 {{ getSortIcon("lastUsed") }}
               </n-button>
             </n-button-group>
-          </n-space>
+          </div>
           <div class="header-actions">
+            <span class="multi-game-selection-count">
+              {{ isOpeningMultiGame ? "正在准备" : "已选" }}
+              {{ multiGameSelectedTokenIds.size }} 个
+            </span>
+            <n-button
+              size="small"
+              :disabled="isOpeningMultiGame"
+              @click="selectAllMultiGameTokens"
+            >
+              {{ allMultiGameTokensSelected ? "已全选" : "全选" }}
+            </n-button>
+            <n-button
+              size="small"
+              :disabled="multiGameSelectedTokenIds.size === 0 || isOpeningMultiGame"
+              @click="clearMultiGameTokenSelection"
+            >
+              清空
+            </n-button>
+            <n-button
+              type="warning"
+              :disabled="
+                multiGameSelectedTokenIds.size === 0 || isOpeningMultiGame
+              "
+              :loading="isOpeningMultiGame"
+              @click="openSelectedGames"
+            >
+              <template #icon>
+                <n-icon>
+                  <GameController />
+                </n-icon>
+              </template>
+              批量进入游戏（{{ multiGameSelectedTokenIds.size }}）
+            </n-button>
             <n-button type="info" @click="openGame">
               <template #icon>
                 <n-icon>
@@ -134,6 +174,14 @@
                 </n-icon>
               </template>
               批量功能
+            </n-button>
+            <n-button type="warning" @click="goToPushingLevels">
+              <template #icon>
+                <n-icon>
+                  <Rocket />
+                </n-icon>
+              </template>
+              主线推关
             </n-button>
 
             <n-button
@@ -178,6 +226,22 @@
           >
             <template #title>
               <a-space class="token-name" align="center">
+                <span
+                  class="multi-game-token-checkbox"
+                  @click.stop
+                  @mousedown.stop
+                  @dragstart.stop.prevent
+                >
+                  <n-checkbox
+                    :checked="multiGameSelectedTokenIds.has(token.id)"
+                    :disabled="isOpeningMultiGame"
+                    :aria-label="`选择 ${token.name} 批量进入游戏`"
+                    @click.stop
+                    @update:checked="
+                      (checked) => setMultiGameTokenSelected(token.id, checked)
+                    "
+                  />
+                </span>
                 <n-avatar
                   v-if="token.avatar"
                   :src="token.avatar"
@@ -292,6 +356,8 @@
                       token.importMethod === 'url' ||
                       token.importMethod === 'bin' ||
                       token.importMethod === 'wxQrcode' ||
+                      token.importMethod === 'mobile' ||
+                      token.importMethod === 'wxForceLogout' ||
                       token.upgradedToPermanent
                         ? 'success'
                         : 'warning'
@@ -301,6 +367,8 @@
                       token.importMethod === "url" ||
                       token.importMethod === "bin" ||
                       token.importMethod === "wxQrcode" ||
+                      token.importMethod === "mobile" ||
+                      token.importMethod === "wxForceLogout" ||
                       token.upgradedToPermanent
                         ? "长期有效"
                         : "临时存储"
@@ -315,6 +383,8 @@
                       token.importMethod === 'url' ||
                       token.importMethod === 'bin' ||
                       token.importMethod === 'wxQrcode' ||
+                      token.importMethod === 'mobile' ||
+                      token.importMethod === 'wxForceLogout' ||
                       token.upgradedToPermanent
                     )
                   "
@@ -373,6 +443,22 @@
             <n-space justify="space-between" align="center">
               <!-- Info -->
               <n-space align="center" :size="6">
+                <span
+                  class="multi-game-token-checkbox"
+                  @click.stop
+                  @mousedown.stop
+                  @dragstart.stop.prevent
+                >
+                  <n-checkbox
+                    :checked="multiGameSelectedTokenIds.has(token.id)"
+                    :disabled="isOpeningMultiGame"
+                    :aria-label="`选择 ${token.name} 批量进入游戏`"
+                    @click.stop
+                    @update:checked="
+                      (checked) => setMultiGameTokenSelected(token.id, checked)
+                    "
+                  />
+                </span>
                 <!-- 连接状态 - 移动到最前端显示 -->
                 <div style="min-width: 65px">
                   <a-badge
@@ -473,6 +559,8 @@
                     token.importMethod === 'url' ||
                     token.importMethod === 'bin' ||
                     token.importMethod === 'wxQrcode' ||
+                    token.importMethod === 'mobile' ||
+                    token.importMethod === 'wxForceLogout' ||
                     token.upgradedToPermanent
                       ? 'success'
                       : 'warning'
@@ -482,6 +570,8 @@
                     token.importMethod === "url" ||
                     token.importMethod === "bin" ||
                     token.importMethod === "wxQrcode" ||
+                    token.importMethod === "mobile" ||
+                    token.importMethod === "wxForceLogout" ||
                     token.upgradedToPermanent
                       ? "长期"
                       : "临时"
@@ -495,6 +585,8 @@
                       token.importMethod === 'url' ||
                       token.importMethod === 'bin' ||
                       token.importMethod === 'wxQrcode' ||
+                      token.importMethod === 'mobile' ||
+                      token.importMethod === 'wxForceLogout' ||
                       token.upgradedToPermanent
                     )
                   "
@@ -624,12 +716,14 @@ import UrlTokenForm from "./url.vue";
 import BinTokenForm from "./bin.vue";
 import singleBinTokenForm from "./singlebin.vue";
 import WxQrcodeForm from "./wxqrcode.vue";
+import MobileTokenForm from "./mobile.vue";
 
 import { useTokenStore, selectedTokenId } from "@/stores/tokenStore";
 import {
   Add,
   Copy,
   Create,
+  DownloadOutline,
   EllipsisHorizontal,
   Grid,
   List,
@@ -637,17 +731,35 @@ import {
   Key,
   Menu,
   Refresh,
+  Rocket,
   Star,
   SyncCircle,
   TrashBin,
   GameController,
 } from "@vicons/ionicons5";
 import { NIcon, NAlert, useDialog, useMessage } from "naive-ui";
-import { h, onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { computed, h, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { transformToken, scheduleAuthUserRequest } from "@/utils/token";
+import {
+  generateBinFromCombUser,
+  refreshTokenFromCombUser,
+  roleIndexFromServerId,
+} from "@/utils/wechatForceLogout";
+import {
+  buildRoleBin,
+  downloadBinFile,
+  getBinPayload,
+  getRoleBinFileName,
+} from "@/utils/binFile";
 import { $emit } from "@/stores/events/index.ts";
 import useIndexedDB from "@/hooks/useIndexedDB";
+import { prepareMultiGameLaunch } from "@/utils/gameLauncher";
+import {
+  pruneTokenSelection,
+  selectAllTokenIds,
+  toggleTokenSelection,
+} from "@/utils/gameSelection";
 import lz4 from "lz4js";
 const { getArrayBuffer, storeArrayBuffer, deleteArrayBuffer, clearAll } =
   useIndexedDB();
@@ -684,6 +796,8 @@ const connectingTokens = ref(new Set());
 // 从localStorage读取上次的视图模式，默认为列表视图
 const viewMode = ref(localStorage.getItem("tokenViewMode") || "list");
 const dragIndex = ref(null);
+const multiGameSelectedTokenIds = ref(new Set());
+const isOpeningMultiGame = ref(false);
 
 // 备注编辑状态管理
 const editingRemark = ref(null); // 当前正在编辑备注的tokenId
@@ -747,6 +861,43 @@ const sortedTokens = computed(() => {
     return 0;
   });
 });
+
+const selectedMultiGameTokens = computed(() =>
+  sortedTokens.value.filter((token) =>
+    multiGameSelectedTokenIds.value.has(token.id),
+  ),
+);
+const allMultiGameTokensSelected = computed(
+  () =>
+    sortedTokens.value.length > 0 &&
+    selectedMultiGameTokens.value.length === sortedTokens.value.length,
+);
+
+function setMultiGameTokenSelected(tokenId, checked) {
+  multiGameSelectedTokenIds.value = toggleTokenSelection(
+    multiGameSelectedTokenIds.value,
+    tokenId,
+    checked,
+  );
+}
+
+function selectAllMultiGameTokens() {
+  multiGameSelectedTokenIds.value = selectAllTokenIds(sortedTokens.value);
+}
+
+function clearMultiGameTokenSelection() {
+  multiGameSelectedTokenIds.value = new Set();
+}
+
+watch(
+  () => tokenStore.gameTokens.map((token) => token.id),
+  () => {
+    multiGameSelectedTokenIds.value = pruneTokenSelection(
+      multiGameSelectedTokenIds.value,
+      tokenStore.gameTokens,
+    );
+  },
+);
 
 // 切换排序
 const toggleSort = (field) => {
@@ -894,9 +1045,27 @@ const refreshToken = async (token) => {
       });
 
       message.success("Token刷新成功");
+    } else if (token.combUser || token.importMethod === "wxForceLogout") {
+      if (!token.combUser) {
+        throw new Error("该账号未保存 combUser，无法自动刷新");
+      }
+      const refreshed = await refreshTokenFromCombUser(token.combUser, {
+        serverId: token.serverId,
+        roleIndex: token.roleIndex,
+        roleId: token.roleId,
+      });
+      tokenStore.updateToken(token.id, {
+        token: refreshed.token,
+        serverId: refreshed.role.serverId,
+        roleId: refreshed.role.roleId,
+        roleIndex: roleIndexFromServerId(refreshed.role.serverId),
+        lastRefreshed: Date.now(),
+      });
+      message.success("combUser Token刷新成功");
     } else if (
       token.importMethod === "wxQrcode" ||
-      token.importMethod === "bin"
+      token.importMethod === "bin" ||
+      token.importMethod === "mobile"
     ) {
       let userToken = await getArrayBuffer(token.id);
       let usedOldKey = false;
@@ -1107,6 +1276,11 @@ const getTokenActions = (token) => {
       key: "copy",
       icon: () => h(NIcon, null, { default: () => h(Copy) }),
     },
+    {
+      label: "下载 BIN",
+      key: "download-bin",
+      icon: () => h(NIcon, null, { default: () => h(DownloadOutline) }),
+    },
   ];
 
   // 根据Token类型添加刷新选项
@@ -1144,6 +1318,9 @@ const handleTokenAction = async (key, token) => {
       break;
     case "copy":
       copyToken(token);
+      break;
+    case "download-bin":
+      downloadTokenBin(token);
       break;
     case "refresh":
       // 重新获取Token
@@ -1202,6 +1379,39 @@ const copyToken = async (token) => {
   }
 };
 
+const downloadTokenBin = async (token) => {
+  try {
+    let sourceBin;
+    if (token.combUser) {
+      sourceBin = generateBinFromCombUser(token.combUser, token.serverId);
+    } else {
+      sourceBin = await getArrayBuffer(token.id);
+      if (!sourceBin) sourceBin = await getArrayBuffer(token.name);
+      if (!sourceBin) {
+        throw new Error("该账号未保存 BIN 登录凭据，无法下载");
+      }
+    }
+
+    const payload = getBinPayload(sourceBin);
+    const serverId = token.serverId ?? payload.serverId;
+    if (serverId === undefined || serverId === null || serverId === "") {
+      throw new Error("BIN 登录凭据缺少区服信息");
+    }
+
+    const bin = buildRoleBin(payload, serverId);
+    const fileName = getRoleBinFileName({
+      serverId,
+      roleId: token.roleId ?? token.id,
+      name: token.name,
+    });
+    downloadBinFile(fileName, bin);
+    message.success(`已开始下载: ${fileName}`);
+  } catch (error) {
+    console.error("下载 BIN 失败:", error);
+    message.error(error.message || "下载 BIN 失败");
+  }
+};
+
 // 快速编辑备注功能
 const startEditRemark = (token) => {
   editingRemark.value = token.id;
@@ -1253,6 +1463,8 @@ const refreshAllTokens = async () => {
     (token) =>
       token.importMethod === "url" ||
       token.importMethod === "wxQrcode" ||
+      token.importMethod === "mobile" ||
+      token.importMethod === "wxForceLogout" ||
       token.importMethod === "bin",
   );
   const manualTokens = tokenStore.gameTokens.filter(
@@ -1513,6 +1725,10 @@ const goToDashboard = () => {
   router.push("/admin/batch-daily-tasks");
 };
 
+const goToPushingLevels = () => {
+  router.push("/admin/PushingLevels");
+};
+
 // ============ BIN 格式转换（来自 convertBin.mjs） ============
 
 function extractKey(bytes) {
@@ -1574,6 +1790,35 @@ function convertBinToLx(buf) {
   }
   // 其他格式原样返回
   return e;
+}
+
+async function openSelectedGames() {
+  if (selectedMultiGameTokens.value.length === 0 || isOpeningMultiGame.value) return;
+  const tokensToOpen = [...selectedMultiGameTokens.value];
+  isOpeningMultiGame.value = true;
+  try {
+    const { launch, failures } = await prepareMultiGameLaunch({
+      tokens: tokensToOpen,
+      getArrayBuffer,
+      localStorage: window.localStorage,
+      sessionStorage: window.sessionStorage,
+    });
+
+    if (launch.sessions.length === 0) {
+      message.error("所选账号均准备失败，请检查 BIN 数据后重试");
+      return;
+    }
+    if (failures.length > 0) {
+      const failedNames = failures.map((failure) => failure.name).join("、");
+      message.warning(`已跳过 ${failures.length} 个账号：${failedNames}`);
+    }
+    await router.push("/multi-game");
+  } catch (error) {
+    console.error("Batch game launch failed:", error);
+    message.error("批量进入游戏失败，请重试");
+  } finally {
+    isOpeningMultiGame.value = false;
+  }
 }
 
 const openGame = async () => {
@@ -1971,8 +2216,10 @@ onUnmounted(() => {
 
 .section-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   margin-bottom: var(--spacing-xl);
   position: sticky;
   top: 0;
@@ -1990,13 +2237,45 @@ onUnmounted(() => {
   }
 }
 
+.section-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.sort-buttons {
+  flex-shrink: 0;
+}
+
 .header-actions {
   display: flex;
-  gap: var(--spacing-md);
+  align-items: center;
+  gap: 8px;
   max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+  overflow: visible;
+  justify-content: flex-end;
+}
+
+.multi-game-selection-count {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.multi-game-token-checkbox {
+  display: inline-flex;
+  align-items: center;
+  cursor: default;
 }
 
 .tokens-grid {
@@ -2365,6 +2644,19 @@ onUnmounted(() => {
     flex-direction: column;
     gap: var(--spacing-md);
     align-items: stretch;
+  }
+
+  .section-main {
+    width: 100%;
+  }
+
+  .section-title-row {
+    flex-wrap: wrap;
+  }
+
+  .header-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .token-timestamps {
