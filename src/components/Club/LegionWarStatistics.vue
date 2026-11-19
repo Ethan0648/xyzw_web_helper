@@ -259,6 +259,7 @@ import { useLegionWarStore } from "@/stores/legionWarStore";
 import { useTokenStore } from "@/stores/tokenStore";
 import { isLegionWarAccessible } from "@/utils/clubBattleUtils";
 import { getCurrentTimeByFormat } from "@/utils/DateTimeUtils";
+import { downloadCanvasAsImage } from "@/utils/imageExport";
 import { isSameGameValue } from "@/utils/gameValue.js";
 import { formatPower } from "@/utils/legionWar";
 
@@ -374,16 +375,16 @@ const exportImage = async () => {
       backgroundColor: "#ffffff",
     });
 
-    const link = document.createElement("a");
     const modeName =
       viewMode.value === "legion"
         ? "俱乐部战况"
         : viewMode.value === "individual"
           ? "个人战况"
           : "全部战况";
-    link.download = `盐场${modeName}_${getCurrentTimeByFormat("yyyyMMdd_HHmmss")}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+    downloadCanvasAsImage(
+      canvas,
+      `盐场${modeName}_${getCurrentTimeByFormat("yyyyMMdd_HHmmss")}.png`,
+    );
     message.success("导出成功");
   } catch (error) {
     console.error("导出失败:", error);

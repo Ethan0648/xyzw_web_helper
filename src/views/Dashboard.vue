@@ -27,6 +27,21 @@
           </div>
         </section>
 
+        <!-- 公告区 -->
+        <section class="notice-section">
+          <h2 class="section-title">公告</h2>
+          <div class="notice-card">
+            <p>灵云脚本免费版将持续维护与更新，功能持续升级中。</p>
+            <p>
+              总域名：<strong>yanling.fun</strong><br />
+              联系微信：<strong>FieYangu</strong>（付费版支持试用与购买，问题反馈、功能建议请联系）
+            </p>
+            <p>
+              您的每一次付费购买，都是支持免费版持续更新和功能全面升级的最大动力。
+            </p>
+          </div>
+        </section>
+
         <!-- 快速操作 -->
         <section class="quick-actions-section">
           <h2 class="section-title">快速操作</h2>
@@ -423,6 +438,34 @@ onMounted(async () => {
 // 快速操作区域
 .quick-actions-section {
   margin-bottom: var(--spacing-xl);
+}
+
+.notice-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.notice-card {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-large);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-light);
+  border-left: 4px solid var(--primary-color);
+
+  p {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    margin: 0;
+  }
+
+  p + p {
+    margin-top: var(--spacing-sm);
+  }
+
+  strong {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
 }
 
 .section-title {
