@@ -30,6 +30,20 @@
         <!-- 公告区 -->
         <section class="notice-section">
           <h2 class="section-title">公告</h2>
+
+          <div class="important-notice-card" @click="showDomainNotice = true">
+            <div class="important-notice-badge">重要通知</div>
+            <p class="important-notice-title">
+              服务器以及域名即将到期，需要更换！
+            </p>
+            <p>
+              免费版网址将会变更，请尽快添加微信号：
+              <strong class="wechat-highlight">FieYangu</strong>
+              ，避免失联！
+            </p>
+            <p class="important-notice-tip">点击查看详情 / 一键复制微信号</p>
+          </div>
+
           <div class="notice-card">
             <p>灵云脚本免费版将持续维护与更新，功能持续升级中。</p>
             <p>
@@ -41,6 +55,45 @@
             </p>
           </div>
         </section>
+
+        <n-modal
+          v-model:show="showDomainNotice"
+          preset="card"
+          :mask-closable="false"
+          :closable="true"
+          class="domain-notice-modal"
+          style="width: 92%; max-width: 460px"
+        >
+          <template #header>
+            <div class="domain-modal-header">
+              <span class="domain-modal-badge">重要通知</span>
+              <span>域名即将到期</span>
+            </div>
+          </template>
+
+          <div class="domain-modal-body">
+            <p class="domain-modal-lead">
+              服务器以及域名即将到期，需要更换。
+            </p>
+            <p>免费版网址将会变更，请务必添加微信号，避免失联！</p>
+            <div class="domain-modal-wechat">
+              <span class="domain-modal-label">微信号</span>
+              <strong class="wechat-highlight">FieYangu</strong>
+            </div>
+            <p class="domain-modal-hint">
+              添加时请备注「脚本」，后续新地址与更新通知将通过微信同步。
+            </p>
+          </div>
+
+          <template #footer>
+            <div class="domain-modal-footer">
+              <n-button @click="copyWechatId">复制微信号</n-button>
+              <n-button type="error" @click="acknowledgeDomainNotice">
+                我知道了
+              </n-button>
+            </div>
+          </template>
+        </n-modal>
 
         <!-- 快速操作 -->
         <section class="quick-actions-section">
@@ -86,6 +139,24 @@ const router = useRouter();
 const message = useMessage();
 const tokenStore = useTokenStore();
 const { getArrayBuffer } = useIndexedDB();
+
+const DOMAIN_NOTICE_KEY = "domain_expiry_notice_acked_v1";
+const WECHAT_ID = "FieYangu";
+const showDomainNotice = ref(false);
+
+const copyWechatId = async () => {
+  try {
+    await navigator.clipboard.writeText(WECHAT_ID);
+    message.success(`已复制微信号：${WECHAT_ID}`);
+  } catch {
+    message.info(`请手动添加微信号：${WECHAT_ID}`);
+  }
+};
+
+const acknowledgeDomainNotice = () => {
+  localStorage.setItem(DOMAIN_NOTICE_KEY, String(Date.now()));
+  showDomainNotice.value = false;
+};
 
 // ============ BIN 格式转换 ============
 
@@ -316,6 +387,13 @@ onMounted(async () => {
 
   // 初始化Token数据
   tokenStore.initTokenStore();
+
+  // 域名到期重要通知：进入首页自动弹窗（关闭后当天内不再强弹）
+  const ackedAt = Number(localStorage.getItem(DOMAIN_NOTICE_KEY) || 0);
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  if (!ackedAt || Date.now() - ackedAt > oneDayMs) {
+    showDomainNotice.value = true;
+  }
 });
 </script>
 
@@ -444,6 +522,58 @@ onMounted(async () => {
   margin-bottom: var(--spacing-xl);
 }
 
+.important-notice-card {
+  position: relative;
+  margin-bottom: var(--spacing-md);
+  padding: calc(var(--spacing-lg) + 4px) var(--spacing-lg) var(--spacing-lg);
+  border-radius: var(--border-radius-large);
+  background: linear-gradient(135deg, #fff1f0 0%, #ffe7e5 55%, #fff7e6 100%);
+  border: 2px solid #ff4d4f;
+  box-shadow: 0 8px 24px rgba(255, 77, 79, 0.18);
+  cursor: pointer;
+  animation: important-pulse 2.4s ease-in-out infinite;
+
+  .important-notice-badge {
+    position: absolute;
+    top: -12px;
+    left: 16px;
+    padding: 2px 12px;
+    border-radius: 999px;
+    background: #ff4d4f;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .important-notice-title {
+    color: #cf1322;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+
+  p {
+    margin: 0;
+    color: #5c0011;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .important-notice-tip {
+    margin-top: 10px;
+    color: #ad2102;
+    font-size: 12px;
+    font-weight: 600;
+  }
+}
+
+.wechat-highlight {
+  color: #cf1322 !important;
+  font-size: 1.15em;
+  letter-spacing: 0.02em;
+}
+
 .notice-card {
   background: var(--bg-primary);
   border-radius: var(--border-radius-large);
@@ -465,6 +595,79 @@ onMounted(async () => {
   strong {
     color: var(--text-primary);
     font-weight: var(--font-weight-semibold);
+  }
+}
+
+.domain-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: #cf1322;
+}
+
+.domain-modal-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #ff4d4f;
+  color: #fff;
+  font-size: 12px;
+}
+
+.domain-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text-primary);
+  line-height: 1.7;
+
+  .domain-modal-lead {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #cf1322;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.domain-modal-wechat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff1f0;
+  border: 1px dashed #ff7875;
+}
+
+.domain-modal-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.domain-modal-hint {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.domain-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@keyframes important-pulse {
+  0%,
+  100% {
+    box-shadow: 0 8px 24px rgba(255, 77, 79, 0.18);
+  }
+  50% {
+    box-shadow: 0 10px 28px rgba(255, 77, 79, 0.32);
   }
 }
 
