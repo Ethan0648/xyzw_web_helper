@@ -34,14 +34,17 @@
           <div class="important-notice-card" @click="showDomainNotice = true">
             <div class="important-notice-badge">重要通知</div>
             <p class="important-notice-title">
-              服务器以及域名即将到期，需要更换！
+              服务器以及域名即将到期，需要更换
             </p>
             <p>
-              免费版网址将会变更，请尽快添加微信号：
-              <strong class="wechat-highlight">FieYangu</strong>
-              ，避免失联！
+              免费版网址将会变更，建议添加微信
+              <strong>FieYangu</strong>
+              ，朋友圈会发布新的免费版地址。
             </p>
-            <p class="important-notice-tip">点击查看详情 / 一键复制微信号</p>
+            <p>
+              本网站将于 <strong>12月3号</strong> 到期关闭；不愿意添加微信的朋友请多多关注公告，迁移完毕后会第一时间更新公告，发布最新地址。
+            </p>
+            <p class="important-notice-tip">点击查看详情</p>
           </div>
 
           <div class="notice-card">
@@ -62,7 +65,7 @@
           :mask-closable="false"
           :closable="true"
           class="domain-notice-modal"
-          style="width: 92%; max-width: 460px"
+          style="width: 92%; max-width: 480px"
         >
           <template #header>
             <div class="domain-modal-header">
@@ -75,20 +78,26 @@
             <p class="domain-modal-lead">
               服务器以及域名即将到期，需要更换。
             </p>
-            <p>免费版网址将会变更，请务必添加微信号，避免失联！</p>
-            <div class="domain-modal-wechat">
-              <span class="domain-modal-label">微信号</span>
-              <strong class="wechat-highlight">FieYangu</strong>
-            </div>
-            <p class="domain-modal-hint">
-              添加时请备注「脚本」，后续新地址与更新通知将通过微信同步。
+            <p>
+              免费版网址将会变更，建议添加微信，朋友圈会发布新的免费版地址。
             </p>
+            <p>
+              本网站将于 <strong>12月3号</strong> 到期关闭。不愿意添加微信的朋友请多多关注公告，迁移完毕后会第一时间更新公告，发布最新地址。
+            </p>
+            <div class="domain-modal-wechat">
+              <div class="domain-modal-wechat-info">
+                <span class="domain-modal-label">微信号</span>
+                <strong>{{ WECHAT_ID }}</strong>
+              </div>
+              <n-button size="small" :loading="copyingWechat" @click.stop="copyWechatId">
+                复制微信号
+              </n-button>
+            </div>
           </div>
 
           <template #footer>
             <div class="domain-modal-footer">
-              <n-button @click="copyWechatId">复制微信号</n-button>
-              <n-button type="error" @click="acknowledgeDomainNotice">
+              <n-button type="primary" @click="acknowledgeDomainNotice">
                 我知道了
               </n-button>
             </div>
@@ -134,22 +143,29 @@ import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import useIndexedDB from "@/hooks/useIndexedDB";
 import { useTokenStore } from "@/stores/tokenStore";
+import { copyToClipboard } from "@/utils/clubBattleUtils";
 
 const router = useRouter();
 const message = useMessage();
 const tokenStore = useTokenStore();
 const { getArrayBuffer } = useIndexedDB();
 
-const DOMAIN_NOTICE_KEY = "domain_expiry_notice_acked_v1";
+const DOMAIN_NOTICE_KEY = "domain_expiry_notice_acked_v2";
 const WECHAT_ID = "FieYangu";
 const showDomainNotice = ref(false);
+const copyingWechat = ref(false);
 
 const copyWechatId = async () => {
+  if (copyingWechat.value) return;
+  copyingWechat.value = true;
   try {
-    await navigator.clipboard.writeText(WECHAT_ID);
+    await copyToClipboard(WECHAT_ID);
     message.success(`已复制微信号：${WECHAT_ID}`);
-  } catch {
-    message.info(`请手动添加微信号：${WECHAT_ID}`);
+  } catch (error) {
+    console.error("复制微信号失败:", error);
+    message.error(`复制失败，请手动添加：${WECHAT_ID}`);
+  } finally {
+    copyingWechat.value = false;
   }
 };
 
@@ -527,11 +543,11 @@ onMounted(async () => {
   margin-bottom: var(--spacing-md);
   padding: calc(var(--spacing-lg) + 4px) var(--spacing-lg) var(--spacing-lg);
   border-radius: var(--border-radius-large);
-  background: linear-gradient(135deg, #fff1f0 0%, #ffe7e5 55%, #fff7e6 100%);
-  border: 2px solid #ff4d4f;
-  box-shadow: 0 8px 24px rgba(255, 77, 79, 0.18);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  border-left: 4px solid var(--warning-color, #f0a020);
+  box-shadow: var(--shadow-light);
   cursor: pointer;
-  animation: important-pulse 2.4s ease-in-out infinite;
 
   .important-notice-badge {
     position: absolute;
@@ -539,7 +555,7 @@ onMounted(async () => {
     left: 16px;
     padding: 2px 12px;
     border-radius: 999px;
-    background: #ff4d4f;
+    background: var(--warning-color, #f0a020);
     color: #fff;
     font-size: 12px;
     font-weight: 700;
@@ -547,7 +563,7 @@ onMounted(async () => {
   }
 
   .important-notice-title {
-    color: #cf1322;
+    color: var(--text-primary);
     font-size: 16px;
     font-weight: 700;
     margin: 0 0 8px;
@@ -555,23 +571,25 @@ onMounted(async () => {
 
   p {
     margin: 0;
-    color: #5c0011;
+    color: var(--text-secondary);
     font-size: var(--font-size-sm);
     line-height: var(--line-height-relaxed);
   }
 
+  p + p {
+    margin-top: var(--spacing-sm);
+  }
+
+  strong {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+
   .important-notice-tip {
     margin-top: 10px;
-    color: #ad2102;
+    color: var(--text-tertiary, var(--text-secondary));
     font-size: 12px;
-    font-weight: 600;
   }
-}
-
-.wechat-highlight {
-  color: #cf1322 !important;
-  font-size: 1.15em;
-  letter-spacing: 0.02em;
 }
 
 .notice-card {
@@ -603,7 +621,7 @@ onMounted(async () => {
   align-items: center;
   gap: 10px;
   font-weight: 700;
-  color: #cf1322;
+  color: var(--text-primary);
 }
 
 .domain-modal-badge {
@@ -611,7 +629,7 @@ onMounted(async () => {
   align-items: center;
   padding: 2px 10px;
   border-radius: 999px;
-  background: #ff4d4f;
+  background: var(--warning-color, #f0a020);
   color: #fff;
   font-size: 12px;
 }
@@ -627,30 +645,36 @@ onMounted(async () => {
     margin: 0;
     font-size: 16px;
     font-weight: 700;
-    color: #cf1322;
   }
 
   p {
     margin: 0;
+    color: var(--text-secondary);
+  }
+
+  strong {
+    color: var(--text-primary);
   }
 }
 
 .domain-modal-wechat {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: #fff1f0;
-  border: 1px dashed #ff7875;
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.03));
+  border: 1px dashed var(--border-color, rgba(0, 0, 0, 0.12));
+}
+
+.domain-modal-wechat-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .domain-modal-label {
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.domain-modal-hint {
   color: var(--text-secondary);
   font-size: 13px;
 }
@@ -659,16 +683,6 @@ onMounted(async () => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-}
-
-@keyframes important-pulse {
-  0%,
-  100% {
-    box-shadow: 0 8px 24px rgba(255, 77, 79, 0.18);
-  }
-  50% {
-    box-shadow: 0 10px 28px rgba(255, 77, 79, 0.32);
-  }
 }
 
 .section-title {
