@@ -32,22 +32,25 @@
           <h2 class="section-title">公告</h2>
 
           <div class="important-notice-card" @click="showDomainNotice = true">
-            <div class="important-notice-badge">重要通知</div>
+            <div class="important-notice-badge">最新免费版</div>
             <p class="important-notice-title">
-              服务器以及域名即将到期，需要更换
+              本站为最新免费版地址，请收藏，以免走丢
             </p>
             <p>
-              免费版网址将会变更，建议添加微信
-              <strong>FieYangu</strong>
-              ，朋友圈会发布新的免费版地址。
+              最新免费版地址：
+              <a :href="NEW_SITE_URL" class="notice-link" @click.stop>{{
+                NEW_SITE_URL
+              }}</a>
             </p>
             <p>
-              本网站将于 <strong>12月3号</strong> 到期关闭；不愿意添加微信的朋友请多多关注公告，迁移完毕后会第一时间更新公告，发布最新地址。
+              如果进入本站后看不到原来的账号或配置，请使用原来的浏览器打开旧网站，
+              在“备份 /
+              恢复”中手动导出备份，再到本站导入恢复。不同网址的数据不会自动同步。
             </p>
-            <p class="important-notice-tip">点击查看详情</p>
-          </div>
-
-          <div class="notice-card">
+            <p>
+              旧网站将于
+              <strong>2026年12月3日</strong> 关闭，请在关闭前完成备份迁移。
+            </p>
             <p>灵云脚本免费版将持续维护与更新，功能持续升级中。</p>
             <p>
               总域名：<strong>yanling.fun</strong><br />
@@ -56,6 +59,7 @@
             <p>
               您的每一次付费购买，都是支持免费版持续更新和功能全面升级的最大动力。
             </p>
+            <p class="important-notice-tip">点击查看详情与联系方式</p>
           </div>
         </section>
 
@@ -69,27 +73,41 @@
         >
           <template #header>
             <div class="domain-modal-header">
-              <span class="domain-modal-badge">重要通知</span>
-              <span>域名即将到期</span>
+              <span class="domain-modal-badge">最新免费版</span>
+              <span>收藏本站与数据迁移</span>
             </div>
           </template>
 
           <div class="domain-modal-body">
             <p class="domain-modal-lead">
-              服务器以及域名即将到期，需要更换。
+              本站为最新免费版地址，请收藏，以免走丢。
             </p>
             <p>
-              免费版网址将会变更，建议添加微信，朋友圈会发布新的免费版地址。
+              <a :href="NEW_SITE_URL" class="notice-link">{{ NEW_SITE_URL }}</a>
             </p>
             <p>
-              本网站将于 <strong>12月3号</strong> 到期关闭。不愿意添加微信的朋友请多多关注公告，迁移完毕后会第一时间更新公告，发布最新地址。
+              新旧网址的数据不会自动同步。如果本站看不到原来的数据，请使用原来的浏览器
+              打开旧网站，在“备份 / 恢复”中导出备份文件，再到本站的“备份 /
+              恢复”中导入。
+            </p>
+            <p>
+              旧网站将于 <strong>2026年12月3日</strong> 关闭，请提前备份迁移。
+            </p>
+            <p>
+              灵云脚本免费版持续维护更新。脚本问题反馈、功能建议，以及付费版试用与购买，
+              请联系微信 <strong>{{ WECHAT_ID }}</strong
+              >。感谢大家的支持。
             </p>
             <div class="domain-modal-wechat">
               <div class="domain-modal-wechat-info">
                 <span class="domain-modal-label">微信号</span>
                 <strong>{{ WECHAT_ID }}</strong>
               </div>
-              <n-button size="small" :loading="copyingWechat" @click.stop="copyWechatId">
+              <n-button
+                size="small"
+                :loading="copyingWechat"
+                @click.stop="copyWechatId"
+              >
                 复制微信号
               </n-button>
             </div>
@@ -150,7 +168,8 @@ const message = useMessage();
 const tokenStore = useTokenStore();
 const { getArrayBuffer } = useIndexedDB();
 
-const DOMAIN_NOTICE_KEY = "domain_expiry_notice_acked_v2";
+const DOMAIN_NOTICE_KEY = "new_server_notice_acked_20261125";
+const NEW_SITE_URL = "http://124.222.163.110:6660";
 const WECHAT_ID = "FieYangu";
 const showDomainNotice = ref(false);
 const copyingWechat = ref(false);
@@ -404,7 +423,7 @@ onMounted(async () => {
   // 初始化Token数据
   tokenStore.initTokenStore();
 
-  // 域名到期重要通知：进入首页自动弹窗（关闭后当天内不再强弹）
+  // 迁移公告：进入首页自动弹窗，确认后 24 小时内不再强弹。
   const ackedAt = Number(localStorage.getItem(DOMAIN_NOTICE_KEY) || 0);
   const oneDayMs = 24 * 60 * 60 * 1000;
   if (!ackedAt || Date.now() - ackedAt > oneDayMs) {
@@ -592,28 +611,10 @@ onMounted(async () => {
   }
 }
 
-.notice-card {
-  background: var(--bg-primary);
-  border-radius: var(--border-radius-large);
-  padding: var(--spacing-lg);
-  box-shadow: var(--shadow-light);
-  border-left: 4px solid var(--primary-color);
-
-  p {
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-    margin: 0;
-  }
-
-  p + p {
-    margin-top: var(--spacing-sm);
-  }
-
-  strong {
-    color: var(--text-primary);
-    font-weight: var(--font-weight-semibold);
-  }
+.notice-link {
+  color: var(--primary-color);
+  text-decoration: underline;
+  overflow-wrap: anywhere;
 }
 
 .domain-modal-header {
