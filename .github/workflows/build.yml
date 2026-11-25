@@ -2,16 +2,26 @@ name: build-dist
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+concurrency:
+  group: build-dist
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node 18
+      - name: Test updater
+        run: python3 -m unittest discover -s test -p 'test_update_helper.py' -v
+
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version-file: .nvmrc
 
       - name: Enable pnpm
         run: corepack enable
@@ -26,3 +36,21 @@ jobs:
         with:
           name: dist
           path: dist
+
+      - name: Package dist
+        run: |
+          test -s dist/index.html
+          (cd dist && zip -qr ../dist.zip .)
+          sha256sum dist.zip > dist.zip.sha256
+
+      - name: Publish release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="dist-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          gh release create "$tag" dist.zip dist.zip.sha256 \
+            --target "$GITHUB_SHA" \
+            --title "dist build ${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}" \
+            --notes "Static build of ${GITHUB_SHA}. Run update-helper on the server to deploy." \
+            --latest

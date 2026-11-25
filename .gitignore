@@ -38,6 +38,8 @@ Thumbs.db
 logs
 *.log
 *.md
+!docs/ubuntu-update.md
+__pycache__/
 # Runtime data
 pids
 *.pid

@@ -154,6 +154,14 @@ pnpm run lint     # 代码检查和修复
 pnpm run format   # 代码格式化
 ```
 
+### Ubuntu / Nginx 一条命令更新
+
+GitHub Actions 手动运行 `build-dist`（选择 `main`）后，会自动发布包含
+`dist.zip` 和 SHA-256 校验文件的 Release。Ubuntu 配置一次后，执行
+`update-helper` 即可更新 `/root/xyzw-helper`，无需手动下载上传，也无需重启 Nginx。
+
+安装步骤和权限说明见 [Ubuntu 更新指南](docs/ubuntu-update.md)。
+
 ### 部署代理服务 (Cloudflare Pages)
 
 本项目推荐使用 Cloudflare Pages 进行部署，内置了对 API 代理的支持。
