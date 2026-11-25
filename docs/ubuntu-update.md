@@ -40,12 +40,22 @@ find /root/xyzw-helper -type d -exec setfacl -m d:u:www-data:r-x {} +
 
 ## 每次更新
 
-仓库的 `main` 为新服务器版本，公告包含最新免费版地址、收藏提醒和旧站数据迁移说明。
-新地址为 `http://124.222.163.110:6660`。`update-helper` 只用于新服务器；
-旧站关闭公告由旧站手动维护，不再单独维护旧站分支。
+### 两台服务器对应的分支
+
+| 部署位置 | Actions 中选择的分支 | 下载的 Artifact | 公告内容 |
+| --- | --- | --- | --- |
+| 新服务器 `http://124.222.163.110:6660` | `main` | `dist-new-server` | 最新免费版地址、收藏提醒、从旧站备份迁移 |
+| 旧服务器 | `codex/legacy-server` | `dist-legacy-server` | 新地址、2026年12月3日关闭、尽快备份迁移 |
+
+在 **Actions → build-dist → Run workflow → Branch** 中分别选择分支，即可分别构建。
+旧服务器下载 `dist-legacy-server` 后，解压覆盖它自己的原有网站目录。
+**`update-helper` 只用于新服务器**；旧分支仅生成 Artifact，不发布 Latest Release，
+避免新服务器自动下载到旧站的关闭公告。两个分支可以分别运行，互不取消。
+
+### 新服务器更新步骤
 
 1. 打开仓库的 **Actions → build-dist → Run workflow**，选择 **main** 分支。
-2. 等待运行成功。流程生成 `dist` Artifact，同时发布一个新的 Release，包含
+2. 等待运行成功。流程生成 `dist-new-server` Artifact，同时发布一个新的 Release，包含
    `dist.zip` 和 `dist.zip.sha256`，并标记为 Latest。
 3. 在服务器的 root 终端执行：
 
