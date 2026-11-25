@@ -32,26 +32,30 @@
           <h2 class="section-title">公告</h2>
 
           <div class="important-notice-card" @click="showDomainNotice = true">
-            <div class="important-notice-badge">最新免费版</div>
+            <div class="important-notice-badge">旧站迁移通知</div>
             <p class="important-notice-title">
-              本站为最新免费版地址，请收藏，以免走丢
+              本站将于12月3日关闭，请尽快备份迁移至新免费版
             </p>
             <p>
               最新免费版地址：
-              <a :href="NEW_SITE_URL" class="notice-link" @click.stop>{{
-                NEW_SITE_URL
-              }}</a>
+              <a
+                :href="NEW_SITE_URL"
+                class="notice-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                @click.stop
+                >{{ NEW_SITE_URL }}</a
+              >
             </p>
             <p>
-              如果进入本站后看不到原来的账号或配置，请使用原来的浏览器打开旧网站，
-              在“备份 /
-              恢复”中手动导出备份，再到本站导入恢复。不同网址的数据不会自动同步。
+              请先在本站的“备份 / 恢复”中手动导出备份文件，再打开新网址，
+              在新网站的“备份 / 恢复”中导入。新旧网址的数据不会自动同步。
             </p>
             <p>
-              旧网站将于
-              <strong>2026年12月3日</strong> 关闭，请在关闭前完成备份迁移。
+              本站将于 <strong>2026年12月3日</strong> 关闭，请尽快完成备份迁移，
+              并收藏新网址，以免走丢。
             </p>
-            <p>灵云脚本免费版将持续维护与更新，功能持续升级中。</p>
+            <p>灵云脚本免费版将在新网站持续维护与更新，功能持续升级中。</p>
             <p>
               总域名：<strong>yanling.fun</strong><br />
               联系微信：<strong>FieYangu</strong>（付费版支持试用与购买，问题反馈、功能建议请联系）
@@ -73,28 +77,35 @@
         >
           <template #header>
             <div class="domain-modal-header">
-              <span class="domain-modal-badge">最新免费版</span>
-              <span>收藏本站与数据迁移</span>
+              <span class="domain-modal-badge">旧站迁移通知</span>
+              <span>12月3日关闭，请尽快备份</span>
             </div>
           </template>
 
           <div class="domain-modal-body">
             <p class="domain-modal-lead">
-              本站为最新免费版地址，请收藏，以免走丢。
+              新免费版已上线，本站将于2026年12月3日关闭。
             </p>
             <p>
-              <a :href="NEW_SITE_URL" class="notice-link">{{ NEW_SITE_URL }}</a>
+              新免费版地址：
+              <a
+                :href="NEW_SITE_URL"
+                class="notice-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                >{{ NEW_SITE_URL }}</a
+              >
             </p>
             <p>
-              新旧网址的数据不会自动同步。如果本站看不到原来的数据，请使用原来的浏览器
-              打开旧网站，在“备份 / 恢复”中导出备份文件，再到本站的“备份 /
-              恢复”中导入。
+              请使用保存着原数据的浏览器，在本站的“备份 / 恢复”中导出备份文件，
+              再到新网站的“备份 / 恢复”中导入。新旧网址的数据不会自动同步。
             </p>
             <p>
-              旧网站将于 <strong>2026年12月3日</strong> 关闭，请提前备份迁移。
+              请在 <strong>2026年12月3日</strong> 关闭前完成迁移，并收藏新网址。
+              迁移成功前请保留备份文件，不要清理旧站的浏览器数据。
             </p>
             <p>
-              灵云脚本免费版持续维护更新。脚本问题反馈、功能建议，以及付费版试用与购买，
+              灵云脚本免费版将在新网站持续维护更新。脚本问题反馈、功能建议，以及付费版试用与购买，
               请联系微信 <strong>{{ WECHAT_ID }}</strong
               >。感谢大家的支持。
             </p>
@@ -168,7 +179,7 @@ const message = useMessage();
 const tokenStore = useTokenStore();
 const { getArrayBuffer } = useIndexedDB();
 
-const DOMAIN_NOTICE_KEY = "new_server_notice_acked_20261125";
+const DOMAIN_NOTICE_KEY = "legacy_server_migration_notice_acked_20261125";
 const NEW_SITE_URL = "http://124.222.163.110:6660";
 const WECHAT_ID = "FieYangu";
 const showDomainNotice = ref(false);
