@@ -1,5 +1,4 @@
 name: build-dist
-run-name: build-dist · ${{ github.ref_name }}
 on:
   workflow_dispatch:
 
@@ -7,7 +6,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: build-dist-${{ github.ref }}
+  group: build-dist
   cancel-in-progress: false
 
 jobs:
@@ -35,7 +34,7 @@ jobs:
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.ref_name == 'main' && 'dist-new-server' || github.ref_name == 'codex/legacy-server' && 'dist-legacy-server' || 'dist' }}
+          name: dist
           path: dist
 
       - name: Package dist
